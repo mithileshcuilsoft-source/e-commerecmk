@@ -3,7 +3,7 @@ const { z } = require("zod");
 const registerSchema = z.object({
   name: z
     .string()
-    .min(6, "Name must be at least 6 characters"),
+    .min(3, "Name must be at least 6 characters"),
 
   email: z
     .email("Invalid email")

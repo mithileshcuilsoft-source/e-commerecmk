@@ -207,7 +207,7 @@ const ProductDetailsPage = () => {
     };
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-10 p-6 md:grid-cols-2">
+    <div className="mx-auto grid max-w-6xl gap-10 p-6 md:grid-cols-2 mt-15">
 
       {/* PRODUCT IMAGE */}
       <div className="relative">
