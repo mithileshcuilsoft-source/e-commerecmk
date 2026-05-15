@@ -33,14 +33,20 @@ const AddressesPage = () => {
     loadAddresses();
   }, []);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = event.target;
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = event.target;
+  
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        event.target instanceof HTMLInputElement &&
+        event.target.type === "checkbox"
+          ? event.target.checked
+          : value,
     }));
   };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
