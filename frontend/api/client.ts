@@ -4,26 +4,15 @@ import axios from "axios";
 // GET COOKIE
 // =========================
 
-const getCookie = (
-  name: string
-) => {
-
-  if (
-    typeof document ===
-    "undefined"
-  ) {
+const getCookie = (name: string) => {
+  if (typeof document === "undefined") {
     return null;
   }
 
-  const cookies =
-    document.cookie.split(
-      "; "
-    );
+  const cookies = document.cookie.split("; ");
 
   for (const cookie of cookies) {
-
-    const [key, value] =
-      cookie.split("=");
+    const [key, value] = cookie.split("=");
 
     if (key === name) {
       return value;
@@ -37,13 +26,11 @@ const getCookie = (
 // AXIOS INSTANCE
 // =========================
 
-const apiClient =
-  axios.create({
-    baseURL:
-      "http://localhost:5000",
+const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
 
-    timeout: 10000,
-  });
+  timeout: 10000,
+});
 
 // =========================
 // REQUEST INTERCEPTOR
@@ -51,35 +38,22 @@ const apiClient =
 
 apiClient.interceptors.request.use(
   (config) => {
-
-    let token =
-      getCookie("token");
+    let token = getCookie("token");
 
     // fallback localStorage
-    if (
-      !token &&
-      typeof window !==
-        "undefined"
-    ) {
-
-      token =
-        localStorage.getItem(
-          "token"
-        );
+    if (!token && typeof window !== "undefined") {
+      token = localStorage.getItem("token");
     }
 
     // attach token
     if (token) {
-
-      config.headers.Authorization =
-        `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
 
-  (error) =>
-    Promise.reject(error)
+  (error) => Promise.reject(error)
 );
 
 // =========================
@@ -87,80 +61,46 @@ apiClient.interceptors.request.use(
 // =========================
 
 apiClient.interceptors.response.use(
-  (response) =>
-    response,
+  (response) => response,
 
   (error) => {
-
     // =========================
     // DEBUGGING
     // =========================
 
-    console.log(
-      "FULL ERROR:",
-      error
-    );
+    console.log("FULL ERROR:", error);
 
-    console.log(
-      "STATUS:",
-      error.response?.status
-    );
+    console.log("STATUS:", error.response?.status);
 
-    console.log(
-      "DATA:",
-      error.response?.data
-    );
+    console.log("DATA:", error.response?.data);
 
-    console.log(
-      "MESSAGE:",
-      error.message
-    );
+    console.log("MESSAGE:", error.message);
 
     // =========================
     // AUTO LOGOUT
     // =========================
 
-    if (
-      error.response?.status ===
-      401
-    ) {
-
+    if (error.response?.status === 401) {
       // clear localStorage
-      localStorage.removeItem(
-        "token"
-      );
+      localStorage.removeItem("token");
 
-      localStorage.removeItem(
-        "userName"
-      );
+      localStorage.removeItem("userName");
 
-      localStorage.removeItem(
-        "role"
-      );
+      localStorage.removeItem("role");
 
-      localStorage.removeItem(
-        "userId"
-      );
+      localStorage.removeItem("userId");
 
       // clear cookie
       document.cookie =
         "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
       // SPA SAFE REDIRECT
-      if (
-        typeof window !==
-        "undefined"
-      ) {
-
-        window.location.replace(
-          "/auth/login"
-        );
+      if (typeof window !== "undefined") {
+        window.location.replace("/auth/login");
       }
     }
 
-    return Promise.reject(
-      error
-    );
+    return Promise.reject(error);
   }
 );
 

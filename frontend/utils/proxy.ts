@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { getToken, isUserLoggedIn } from "./auth";
 import { toast } from "react-hot-toast";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Create proxy instance
 const proxy = axios.create({
