@@ -37,7 +37,10 @@ interface Vendor {
   name: string;
   email: string;
   phone?: string;
-  image?: string;
+  images: {
+    url: string;
+    key: string;
+  }[];
   isBlocked: boolean;
   createdAt: string;
 }
@@ -174,7 +177,7 @@ const AdminDashboard = () => {
 
     try {
       await deleteVendor(vendorId);
-      await loadDashboardData(); 
+      await loadDashboardData();
     } catch (error) {
       console.error("Failed to delete vendor:", error);
     }
@@ -319,7 +322,7 @@ const AdminDashboard = () => {
                       <div key={vendor._id} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
-                            <AvatarImage src={vendor.image} />
+                            <AvatarImage src={vendor.images?.[0]?.url || ""} />
                             <AvatarFallback>{vendor.name?.charAt(0) || "V"}</AvatarFallback>
                           </Avatar>
                           <div>
@@ -353,7 +356,7 @@ const AdminDashboard = () => {
                     <div key={vendor._id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
                         <Avatar className="w-12 h-12">
-                          <AvatarImage src={vendor.image} />
+                          <AvatarImage src={vendor.images?.[0]?.url || ""} />
                           <AvatarFallback>{vendor.name?.charAt(0) || "V"}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -421,11 +424,10 @@ const AdminDashboard = () => {
                     <div key={product._id} className="border rounded-lg p-4">
                       <div className="aspect-square w-full bg-gray-100 rounded-lg mb-3 overflow-hidden">
                         <img
-                          src={product.images?.[0] || "/images/shoes5.jpg"}
+                          src={product.images?.[0]?.url || "/images/shoes5.jpg"}
                           alt={product.name}
                           className="w-full h-full object-cover"
-                        />
-                      </div>
+                        />                  </div>
                       <h3 className="font-semibold mb-1">{product.name}</h3>
                       <p className="text-sm text-gray-500 mb-2">{product.category}</p>
                       <div className="flex items-center justify-between">
@@ -472,8 +474,8 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-2">
                         <Badge variant={
                           user.role === "admin" ? "default" :
-                          user.role === "vendor" ? "secondary" :
-                          "outline"
+                            user.role === "vendor" ? "secondary" :
+                              "outline"
                         }>
                           {user.role}
                         </Badge>
@@ -499,7 +501,7 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {orders.map((order:any) => (
+                  {orders.map((order: any) => (
                     <div key={order._id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex-1">
                         <h3 className="font-semibold">Order #{order._id.slice(-8)}</h3>
@@ -544,9 +546,9 @@ const AdminDashboard = () => {
                         </div>
                         <Badge variant={
                           order.status === "delivered" ? "default" :
-                          order.status === "cancelled" || order.status === "refunded" ? "destructive" :
-                          order.status === "shipped" ? "secondary" :
-                          "outline"
+                            order.status === "cancelled" || order.status === "refunded" ? "destructive" :
+                              order.status === "shipped" ? "secondary" :
+                                "outline"
                         }>
                           {order.status}
                         </Badge>

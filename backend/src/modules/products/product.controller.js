@@ -245,44 +245,21 @@ exports.updateProduct = async (req, res, next) => {
 /**
  * DELETE PRODUCT
  */
-exports.deleteProduct = async (req,res,next) => {
+exports.deleteProductImage = async (imageKey) => {
   try {
-    const deletedProduct =
-      await Product.findOneAndDelete({
-        _id: req.params.id,
-        vendorId: req.user.id,
-      });
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: imageKey,
+      })
+    );
 
-    if (!deletedProduct) {
-      const error = new Error(
-        "Product not found or unauthorized"
-      );
-
-      error.statusCode = 404;
-
-      return next(error);
-    }
-
-    if (
-      deletedProduct.images &&
-      deletedProduct.images.length > 0
-    ) {
-      for (const img of deletedProduct.images) {
-        if (img.key) {
-          await deleteProductImage(
-            img.key
-          );
-        }
-      }
-    }
-
-    res.json({
-      success: true,
-      message:
-        "Product deleted successfully",
-    });
+    console.log(`Deleted image: ${imageKey}`);
   } catch (error) {
-    next(error);
+    console.error(
+      `Failed to delete image ${imageKey}:`,
+      error
+    );
   }
 };
 /**
