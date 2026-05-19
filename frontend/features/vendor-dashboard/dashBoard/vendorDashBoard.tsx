@@ -107,11 +107,11 @@ export default function VendorDashboard() {
               </button>
             </div>
             <Link
-              href="/vendors/add-products"
-              className="bg-black text-white px-4 py-2 rounded-xl text-sm "
-            >
-              Add Product
-            </Link>
+            href="/vendors/add-products"
+            className="bg-black text-white px-4 py-2 rounded-xl text-sm "
+          >
+            Add Product
+          </Link>
           </div>
 
           <p className="text-sm text-gray-500">
@@ -149,12 +149,8 @@ export default function VendorDashboard() {
                     return (
                       <tr key={product._id} className="border-t">
                         <td className="p-4 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded overflow-hidden bg-gray-100">
-                            <img
-                              src={product.images?.[0]?.url}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                            <Package className="w-5 h-5 text-gray-400" />
                           </div>
 
                           <div>

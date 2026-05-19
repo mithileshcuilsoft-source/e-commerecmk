@@ -7,25 +7,25 @@ import React from "react";
 import { useCartStore } from "@/store/useCartStore";
 
 const CartPage = () => {
-  const cart = useCartStore((state) => state.cart);
+ const cart = useCartStore((state) => state.cart);
+ 
+ const loading =useCartStore((state) => state.loading);
 
-  const loading = useCartStore((state) => state.loading);
-
-  const removeFromCart = useCartStore((state) => state.removeFromCart);
+ const removeFromCart =useCartStore((state) => state.removeFromCart);
 
   const increaseQty = useCartStore((state) => state.increaseQty);
 
-  const decreaseQty = useCartStore((state) => state.decreaseQty);
+  const decreaseQty =useCartStore((state) =>state.decreaseQty);
 
-  const clearCart = useCartStore((state) => state.clearCart);
+  const clearCart = useCartStore((state) =>state.clearCart);
 
   const total = cart.reduce((sum, item) => {
-    return (
-      sum +
-      item.productId.price *
-      item.quantity
-    );
-  },
+      return (
+        sum +
+        item.productId.price *
+          item.quantity
+      );
+    },
     0
   );
 
@@ -76,12 +76,13 @@ const CartPage = () => {
                 {/* IMAGE */}
                 <div className="h-20 w-20 overflow-hidden rounded-xl bg-gray-100">
 
-                  {item.productId.images?.[0] ? (
+                  {item.productId
+                    .images?.[0] ? (
 
                     <img
                       src={
                         item.productId
-                          .images?.[0]
+                          .images[0]
                       }
                       alt={
                         item.productId

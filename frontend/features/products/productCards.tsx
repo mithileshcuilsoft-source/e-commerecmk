@@ -17,7 +17,7 @@ const ProductCard = ({ product }: any) => {
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
         <img
-          src={product.images?.[0]?.url}
+          src={product.images?.[0] || "/images/shoes5.jpg"}
           alt={product.name}
           className={`h-full w-full object-cover transition-transform duration-500 ${
             product.available
