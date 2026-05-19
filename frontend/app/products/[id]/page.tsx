@@ -23,7 +23,7 @@ const ProductDetailsPage = () => {
   const router = useRouter();
 
   // ZUSTAND
-  const addToCart =useCartStore((state) =>state.addToCart);
+  const addToCart =useCartStore((state:any) =>state.addToCart);
 
   const [product, setProduct] =useState<any>(null);
 

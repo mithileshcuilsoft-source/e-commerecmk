@@ -87,7 +87,7 @@ const EditProductPage = () => {
       formData.append("variants", JSON.stringify(variants));
 
       if (thumbnail) {
-        formData.append("thumbnail", thumbnail);
+        formData.append("images", thumbnail);
       }
 
       await updateProduct(id, formData);

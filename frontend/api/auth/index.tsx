@@ -1,21 +1,26 @@
 import apiClient from "../client";
 
 
-export const postRequest =
-  async (
-    url: string,
-    data: any
-  ) => {
+export const postRequest = async (
+  url: string,
+  data: any
+) => {
+  try {
 
-    const res =
-      await apiClient.post(
-        url,
-        data
-      );
+    const res = await apiClient.post(url, data);
 
     return res.data;
-  };
 
+  } catch (error: any) {
+
+    console.log(
+      "POST REQUEST ERROR:",
+      error.response?.data || error.message
+    );
+
+    throw error;
+  }
+};
 export const getRequest =
   async (url: string) => {
 

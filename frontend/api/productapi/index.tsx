@@ -1,109 +1,83 @@
 import apiClient from "../client";
 
-// =========================
-// MULTIPART CONFIG
-// =========================
+/**
+ * CREATE PRODUCT
+ */
 
-const getMultipartConfig = (
-  data: any
-) =>
-  data instanceof FormData
-    ? {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
-    : {};
+export const createProduct = async (
+  data: FormData
+) => {
+  const res = await apiClient.post(
+    "/products",
+    data
+  );
 
-// =========================
-// CREATE PRODUCT
-// =========================
+  return res.data;
+};
 
-export const createProduct =
-  async (data: any) => {
+/**
+ * UPDATE PRODUCT
+ */
 
-    const res =
-      await apiClient.post(
-        "/products",
-        data,
-        getMultipartConfig(
-          data
-        )
-      );
+export const updateProduct = async (
+  id: string,
+  data: FormData
+) => {
+  const res = await apiClient.put(
+    `/products/${id}`,
+    data
+  );
 
-    return res.data;
-  };
+  return res.data;
+};
+
+/**
+ * GET ALL PRODUCTS
+ */
+
+export const getAllProducts = async () => {
+  const res = await apiClient.get("/products");
+
+  return res.data;
+};
+
+/**
+ * GET PRODUCT BY ID
+ */
+
+export const getProductById = async (
+  id: string
+) => {
+  const res = await apiClient.get(
+    `/products/${id}`
+  );
+
+  return res.data;
+};
+
+/**
+ * GET VENDOR PRODUCTS
+ */
 
 export const getVendorProducts =
   async () => {
-
-    const res =
-      await apiClient.get(
-        "/products/vendor"
-      );
-
-    return res.data;
-  };
-export const deleteProduct =
-  async (id: string) => {
-
-    const res =
-      await apiClient.delete(
-        `/products/${id}`
-      );
+    const res = await apiClient.get(
+      "/products/vendor"
+    );
 
     return res.data;
   };
 
-// =========================
-// UPDATE PRODUCT
-// =========================
+/**
+ * DELETE PRODUCT
+ */
 
-export const updateProduct =
-  async (
-    id: string,
-    data: any
-  ) => {
+export const deleteProduct = async (
+  id: string
+) => {
+  const res = await apiClient.delete(
+    `/products/${id}`
+  );
 
-    const res =
-      await apiClient.put(
-        `/products/${id}`,
-        data,
-        getMultipartConfig(
-          data
-        )
-      );
-
-    return res.data;
-  };
-
-// =========================
-// GET ALL PRODUCTS
-// =========================
-
-export const getAllProducts =
-  async () => {
-
-    const res =
-      await apiClient.get(
-        "/products"
-      );
-
-    return res.data;
-  };
-
-// =========================
-// GET PRODUCT BY ID
-// =========================
-
-export const getProductById =
-  async (id: string) => {
-
-    const res =
-      await apiClient.get(
-        `/products/${id}`
-      );
-
-    return res.data;
-  };
+  return res.data;
+};

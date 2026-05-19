@@ -18,14 +18,30 @@ export const SignUpVendor = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+  
     try {
-      // Changed to 'auth/vendor/register' to match your vendor logic
-      const response = await postRequest('auth/vendor/register', vendorData);
+      const response = await postRequest(
+        "auth/vendor/register",
+        vendorData
+      );
+  
       alert("Success! Vendor Account Created.");
+  
       console.log(response);
-    } catch (error) {
-      alert("Error: Could not connect to backend.");
+  
+    } catch (error: any) {
+  
+      console.log("VENDOR REGISTER ERROR:", error);
+  
+      // backend message
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Something went wrong";
+  
+      alert(message);
+  
     } finally {
       setLoading(false);
     }

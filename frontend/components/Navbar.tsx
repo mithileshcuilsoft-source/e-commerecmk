@@ -63,7 +63,7 @@ const Navbar = () => {
             className="h-8"
           />
 
-          <span className="text-xl font-bold text-black dark:text-white">
+          <span className="text-xl font-bold text-black dark:text-white sm:text-sm">
             E -{" "}
             <span className="text-blue-600">
               COMMERCE
@@ -205,20 +205,6 @@ const Navbar = () => {
       {/* MOBILE MENU */}
       {isOpen && (
         <div className="space-y-4 border-t bg-white p-4 dark:bg-gray-900 md:hidden">
-
-          <Link
-            href="/"
-            className="block"
-          >
-            Home
-          </Link>
-
-          <Link
-            href="/products"
-            className="block"
-          >
-            Products
-          </Link>
 
           {!isLoggedIn && (
             <>
