@@ -424,10 +424,10 @@ const AdminDashboard = () => {
                     <div key={product._id} className="border rounded-lg p-4">
                       <div className="aspect-square w-full bg-gray-100 rounded-lg mb-3 overflow-hidden">
                         <img
-                          src={product.images?.[0]?.url || "/images/shoes5.jpg"}
+                          src={product.images?.[0] || "/images/shoes5.jpg"}
                           alt={product.name}
                           className="w-full h-full object-cover"
-                        />                  </div>
+                        /></div>
                       <h3 className="font-semibold mb-1">{product.name}</h3>
                       <p className="text-sm text-gray-500 mb-2">{product.category}</p>
                       <div className="flex items-center justify-between">
