@@ -1,3 +1,4 @@
+const { deleteProductImage } = require("../../middlewares/s3UploadHandler");
 const Product = require("../../models/Product");
 
 
@@ -78,6 +79,7 @@ const cleanObject = (obj) =>
       console.log("FILE:", req.file);
   
       data.images = [req.file.location];
+      data.images = [req.file.key];
     }
   
     return cleanObject(data);
@@ -259,6 +261,14 @@ exports.deleteProduct = async (req, res, next) => {
 
       return next(error);
     }
+    
+    if (deletedProduct.images && deletedProduct.images.length > 0) {
+      for (const img of deletedProduct.images) {
+        if (img.key) {
+          await deleteProductImage(img.key);
+        }
+      }
+    }
 
     res.json({
       message: "Product deleted successfully",
@@ -267,7 +277,6 @@ exports.deleteProduct = async (req, res, next) => {
     next(error);
   }
 };
-
 /**
  * UPDATE STOCK
  */

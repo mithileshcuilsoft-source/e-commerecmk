@@ -12,7 +12,7 @@ const validate = require("../middlewares/validate");
 
 const { createProductSchema } = require("../validations/product.validation");
 
-const upload = require("../middlewares/s3UploadHandler");
+const { upload } = require("../middlewares/s3UploadHandler");
 
 /**
  * CREATE PRODUCT

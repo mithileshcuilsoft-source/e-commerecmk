@@ -1,6 +1,6 @@
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const { S3Client } = require("@aws-sdk/client-s3");
+const { S3Client, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const client = new S3Client({
   region: process.env.AWS_REGION,
@@ -11,7 +11,7 @@ const client = new S3Client({
   },
 });
 
-const upload = multer({
+exports.upload = multer({
   storage: multerS3({
     s3: client,
     bucket: process.env.AWS_BUCKET_NAME,
@@ -36,11 +36,7 @@ const upload = multer({
   },
 
   fileFilter: (req, file, cb) => {
-    const allowed = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
 
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
@@ -49,5 +45,16 @@ const upload = multer({
     }
   },
 });
+exports.deleteProductImage = async (imageKey) => {
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: imageKey,
+  };
 
-module.exports = upload;
+  try {
+    const response = await client.send(new DeleteObjectCommand(params));
+    console.log("Successfully deleted:", imageKey);
+  } catch (err) {
+    console.error("Error deleting image:", err);
+  }
+};
