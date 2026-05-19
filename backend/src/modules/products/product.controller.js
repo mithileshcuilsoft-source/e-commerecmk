@@ -1,4 +1,3 @@
-const { deleteProductImage } = require("../../middlewares/s3UploadHandler");
 const Product = require("../../models/Product");
 
 
@@ -79,7 +78,6 @@ const cleanObject = (obj) =>
       console.log("FILE:", req.file);
   
       data.images = [req.file.location];
-      data.images = [req.file.key];
     }
   
     return cleanObject(data);
@@ -245,23 +243,31 @@ exports.updateProduct = async (req, res, next) => {
 /**
  * DELETE PRODUCT
  */
-exports.deleteProductImage = async (imageKey) => {
+exports.deleteProduct = async (req, res, next) => {
   try {
-    await client.send(
-      new DeleteObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: imageKey,
-      })
-    );
+    const deletedProduct = await Product.findOneAndDelete({
+      _id: req.params.id,
+      vendorId: req.user.id,
+    });
 
-    console.log(`Deleted image: ${imageKey}`);
+    if (!deletedProduct) {
+      const error = new Error(
+        "Product not found or unauthorized"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    res.json({
+      message: "Product deleted successfully",
+    });
   } catch (error) {
-    console.error(
-      `Failed to delete image ${imageKey}:`,
-      error
-    );
+    next(error);
   }
 };
+
 /**
  * UPDATE STOCK
  */

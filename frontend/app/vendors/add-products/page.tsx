@@ -124,7 +124,6 @@
         setVariants([
           { name: "", options: [{ value: "", priceModifier: 0, stock: 0 }] },
         ]);
-        
 
       } catch (err) {
         console.error(err);

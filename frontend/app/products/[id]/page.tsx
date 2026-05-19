@@ -23,54 +23,54 @@ const ProductDetailsPage = () => {
   const router = useRouter();
 
   // ZUSTAND
-  const addToCart = useCartStore((state: any) => state.addToCart);
+  const addToCart =useCartStore((state:any) =>state.addToCart);
 
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] =useState<any>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =useState(true);
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] =useState<string | null>(null);
 
-  const [message, setMessage] = useState("");
+  const [message, setMessage] =useState("");
 
   const isAuthenticated = () => {
 
-    if (typeof window === "undefined"
+    if ( typeof window ==="undefined"
     ) {
       return false;
     }
 
     return Boolean(
-      getCookie("token") || localStorage.getItem(
-        "token"
-      )
+      getCookie("token") ||localStorage.getItem(
+          "token"
+        )
     );
   };
 
   useEffect(() => {
 
     const fetchProduct = async () => {
-      try {
-        const data =
-          await getProductById(
-            id as string
+       try {
+          const data =
+            await getProductById(
+              id as string
+            );
+
+          setProduct(data);
+
+        } catch (error) {
+
+          console.error(error);
+
+          setError(
+            "Failed to load product"
           );
 
-        setProduct(data);
+        } finally {
 
-      } catch (error) {
-
-        console.error(error);
-
-        setError(
-          "Failed to load product"
-        );
-
-      } finally {
-
-        setLoading(false);
-      }
-    };
+          setLoading(false);
+        }
+      };
 
     if (id) {
       fetchProduct();
@@ -129,7 +129,7 @@ const ProductDetailsPage = () => {
 
           setMessage(
             product.unavailableReason ||
-            "Product is not available"
+              "Product is not available"
           );
 
           return;
@@ -179,7 +179,7 @@ const ProductDetailsPage = () => {
 
           setMessage(
             product.unavailableReason ||
-            "Product is not available"
+              "Product is not available"
           );
 
           return;
@@ -214,14 +214,15 @@ const ProductDetailsPage = () => {
 
         <img
           src={
-            product.images?.[0]?.url ||
+            product.images?.[0] ||
             "/images/shoes5.jpg"
           }
           alt={product.name}
-          className={`h-[400px] w-full rounded-xl object-cover ${isUnavailable
+          className={`h-[400px] w-full rounded-xl object-cover ${
+            isUnavailable
               ? "grayscale opacity-50"
               : ""
-            }`}
+          }`}
         />
 
         {/* UNAVAILABLE OVERLAY */}
@@ -258,14 +259,15 @@ const ProductDetailsPage = () => {
 
         {/* STOCK */}
         <div
-          className={`font-semibold ${isUnavailable
+          className={`font-semibold ${
+            isUnavailable
               ? "text-red-500"
               : "text-green-600"
-            }`}
+          }`}
         >
           {isUnavailable
             ? product.unavailableReason ||
-            "Product unavailable"
+              "Product unavailable"
             : `In Stock (${product.stock})`}
         </div>
 
@@ -290,10 +292,11 @@ const ProductDetailsPage = () => {
             disabled={
               isUnavailable
             }
-            className={`rounded-xl px-6 py-3 text-white ${isUnavailable
+            className={`rounded-xl px-6 py-3 text-white ${
+              isUnavailable
                 ? "cursor-not-allowed bg-gray-400"
                 : "bg-black hover:bg-gray-800"
-              }`}
+            }`}
           >
             {isUnavailable
               ? "Product Not Available"
@@ -308,10 +311,11 @@ const ProductDetailsPage = () => {
             disabled={
               isUnavailable
             }
-            className={`rounded-xl border px-6 py-3 ${isUnavailable
+            className={`rounded-xl border px-6 py-3 ${
+              isUnavailable
                 ? "cursor-not-allowed border-gray-300 text-gray-400"
                 : "border-black hover:bg-gray-100"
-              }`}
+            }`}
           >
             {isUnavailable
               ? "Unavailable"
