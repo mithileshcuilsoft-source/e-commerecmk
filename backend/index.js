@@ -1,9 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors"); // 1. Import CORS
 const router = require("./src/routes/index");
 const centrErrorHandler = require("./src/middlewares/centrErrorHandler");
-require("dotenv").config();
 
 const app = express();
 
