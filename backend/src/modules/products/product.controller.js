@@ -245,12 +245,13 @@ exports.updateProduct = async (req, res, next) => {
 /**
  * DELETE PRODUCT
  */
-exports.deleteProduct = async (req, res, next) => {
+exports.deleteProduct = async (req,res,next) => {
   try {
-    const deletedProduct = await Product.findOneAndDelete({
-      _id: req.params.id,
-      vendorId: req.user.id,
-    });
+    const deletedProduct =
+      await Product.findOneAndDelete({
+        _id: req.params.id,
+        vendorId: req.user.id,
+      });
 
     if (!deletedProduct) {
       const error = new Error(
@@ -261,17 +262,24 @@ exports.deleteProduct = async (req, res, next) => {
 
       return next(error);
     }
-    
-    if (deletedProduct.images && deletedProduct.images.length > 0) {
+
+    if (
+      deletedProduct.images &&
+      deletedProduct.images.length > 0
+    ) {
       for (const img of deletedProduct.images) {
         if (img.key) {
-          await deleteProductImage(img.key);
+          await deleteProductImage(
+            img.key
+          );
         }
       }
     }
 
     res.json({
-      message: "Product deleted successfully",
+      success: true,
+      message:
+        "Product deleted successfully",
     });
   } catch (error) {
     next(error);
