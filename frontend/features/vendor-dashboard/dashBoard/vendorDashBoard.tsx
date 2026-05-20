@@ -85,140 +85,178 @@ export default function VendorDashboard() {
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
-      <div className="flex-1 flex flex-col">
+  <div className="flex-1 flex flex-col">
 
-        {/* MAIN */}
-        <main className="p-6 space-y-6 mt-20">
+    {/* MAIN */}
+    <main className="p-3 sm:p-4 md:p-6 space-y-6 mt-20">
 
-          {/* HEADER */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Product List</h2>
+      {/* HEADER */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
 
-            <div className="flex gap-2 items-center">
-              <div className="flex items-center bg-white border px-3 py-2 rounded">
-                <Search className="w-4 h-4 mr-2" />
-                <input placeholder="Search..." className="outline-none" />
-              </div>
+        <h2 className="text-xl sm:text-2xl font-bold">
+          Product List
+        </h2>
 
-              <button className="p-2 border rounded">
-                <Filter className="w-4 h-4" />
-              </button>
-            </div>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full lg:w-auto">
 
-            <Link
-              href="/vendors/add-products"
-              className="bg-black text-white px-4 py-2 rounded-xl text-sm"
-            >
-              Add Product
-            </Link>
+          {/* SEARCH */}
+          <div className="flex items-center bg-white border px-3 py-2 rounded w-full sm:w-auto">
+            <Search className="w-4 h-4 mr-2 shrink-0" />
+
+            <input
+              placeholder="Search..."
+              className="outline-none w-full bg-transparent text-sm"
+            />
           </div>
 
-          {/* STATUS */}
-          <p className="text-sm text-gray-500">
-            {loading
-              ? "Loading products..."
-              : `${products.length} products loaded`}
-          </p>
+          {/* FILTER */}
+          <button className="p-2 border rounded w-fit">
+            <Filter className="w-4 h-4" />
+          </button>
 
-          {/* TABLE */}
-          <Card className="rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          {/* ADD PRODUCT */}
+          <Link
+            href="/vendors/add-products"
+            className="bg-black text-white px-4 py-2 rounded-xl text-sm text-center whitespace-nowrap"
+          >
+            Add Product
+          </Link>
 
-                <thead className="bg-gray-100 text-xs uppercase">
-                  <tr>
-                    <th className="p-4 text-left">Product</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Status</th>
-                    <th className="text-right pr-6">Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {!loading && products.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="text-center p-6 text-gray-400">
-                        No products found
-                      </td>
-                    </tr>
-                  )}
-
-                  {products.map((product) => {
-                    const status = getStatus(product.stock);
-                    const isDeleting = deletingId === product._id;
-
-                    return (
-                      <tr key={product._id} className="border-t">
-
-                        {/* PRODUCT */}
-                        <td className="p-4 flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                            <Package className="w-5 h-5 text-gray-400" />
-                          </div>
-
-                          <div>
-                            <p className="font-semibold">{product.name}</p>
-                          </div>
-                        </td>
-
-                        {/* CATEGORY */}
-                        <td>{product.category}</td>
-
-                        {/* PRICE */}
-                        <td>₹{product.price}</td>
-
-                        {/* STOCK */}
-                        <td>
-                          <div className="flex items-center gap-2">
-                            {product.stock}
-                            {product.stock <= 15 && product.stock > 0 && (
-                              <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                            )}
-                          </div>
-                        </td>
-
-                        {/* STATUS */}
-                        <td>
-                          <span className="text-xs font-bold">
-                            {status}
-                          </span>
-                        </td>
-
-                        {/* ACTIONS */}
-                        <td className="text-right pr-6 space-x-2">
-
-                          <button
-                            onClick={() =>
-                              router.push(`/vendors/edit/${product._id}`)
-                            }
-                            className="text-blue-500"
-                            disabled={isDeleting}
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            onClick={() => handleDelete(product._id)}
-                            className="text-red-500"
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                          </button>
-
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-
-              </table>
-            </div>
-          </Card>
-
-        </main>
+        </div>
       </div>
-    </div>
+
+      {/* STATUS */}
+      <p className="text-sm text-gray-500">
+        {loading
+          ? "Loading products..."
+          : `${products.length} products loaded`}
+      </p>
+
+      {/* TABLE */}
+      <Card className="rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+
+          <table className="w-full min-w-[700px]">
+
+            <thead className="bg-gray-100 text-xs uppercase whitespace-nowrap">
+              <tr>
+                <th className="p-4 text-left">Product</th>
+                <th className="px-4 py-3 text-left">Category</th>
+                <th className="px-4 py-3 text-left">Price</th>
+                <th className="px-4 py-3 text-left">Stock</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="text-right pr-6">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {!loading && products.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="text-center p-6 text-gray-400"
+                  >
+                    No products found
+                  </td>
+                </tr>
+              )}
+
+              {products.map((product) => {
+                const status = getStatus(product.stock);
+                const isDeleting = deletingId === product._id;
+
+                return (
+                  <tr
+                    key={product._id}
+                    className="border-t text-sm"
+                  >
+
+                    {/* PRODUCT */}
+                    <td className="p-4">
+                      <div className="flex items-center gap-3 min-w-[200px]">
+
+                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center shrink-0">
+                          <Package className="w-5 h-5 text-gray-400" />
+                        </div>
+
+                        <div>
+                          <p className="font-semibold break-words">
+                            {product.name}
+                          </p>
+                        </div>
+
+                      </div>
+                    </td>
+
+                    {/* CATEGORY */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {product.category}
+                    </td>
+
+                    {/* PRICE */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      ₹{product.price}
+                    </td>
+
+                    {/* STOCK */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {product.stock}
+
+                        {product.stock <= 15 &&
+                          product.stock > 0 && (
+                            <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                          )}
+                      </div>
+                    </td>
+
+                    {/* STATUS */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-xs font-bold">
+                        {status}
+                      </span>
+                    </td>
+
+                    {/* ACTIONS */}
+                    <td className="text-right pr-6 whitespace-nowrap">
+                      <div className="flex justify-end gap-3">
+
+                        <button
+                          onClick={() =>
+                            router.push(`/vendors/edit/${product._id}`)
+                          }
+                          className="text-blue-500"
+                          disabled={isDeleting}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            handleDelete(product._id)
+                          }
+                          className="text-red-500"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting
+                            ? "Deleting..."
+                            : "Delete"}
+                        </button>
+
+                      </div>
+                    </td>
+
+                  </tr>
+                );
+              })}
+            </tbody>
+
+          </table>
+        </div>
+      </Card>
+
+    </main>
+  </div>
+</div>
   );
 }
