@@ -58,7 +58,7 @@ export default function VendorDashboard() {
     init();
   }, []);
 
-  // ---------------- DELETE PRODUCT ----------------
+  //  DELETE PRODUCT 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
@@ -67,7 +67,6 @@ export default function VendorDashboard() {
 
       await deleteProduct(id);
 
-      // 🔥 instant UI update (no refetch)
       setProducts((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       console.error("Delete error:", err);
@@ -77,7 +76,7 @@ export default function VendorDashboard() {
     }
   };
 
-  // ---------------- STOCK STATUS ----------------
+  //  STOCK STATUS
   const getStatus = (stock: number) => {
     if (stock === 0) return "Out of Stock";
     if (stock <= 15) return "Low Stock";
