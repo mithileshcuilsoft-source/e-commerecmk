@@ -75,17 +75,10 @@ const Navbar = () => {
           </Link>
 
           <Link
-            href="/products"
+            href="/all-products"
             className="text-sm font-medium hover:text-blue-600"
           >
             Products
-          </Link>
-
-          <Link
-            href="/about"
-            className="text-sm font-medium hover:text-blue-600"
-          >
-            About
           </Link>
 
           {isLoggedIn ? (
