@@ -53,7 +53,7 @@ const cleanObject = (obj) =>
   }, {});
 
 
-  const buildProductData = async(req) => {
+  const buildProductData = async (req) => {
     const data = {
       name: req.body.name,
       description: req.body.description,
@@ -72,18 +72,9 @@ const cleanObject = (obj) =>
       variants: parseJsonField(req.body.variants),
     };
   
-    /**
-     * S3 IMAGE URL
-     */
     if (req.file) {
       console.log("FILE:", req.file);
-    
-      // delete OLD image (from DB, not data)
-      if (existingProduct?.images?.[0]) {
-        await deleteUploadImages3(existingProduct.images[0]);
-      }
-    
-      // set NEW image
+  
       data.images = [req.file.location];
     }
   
@@ -98,7 +89,7 @@ exports.createProduct = async (req, res, next) => {
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
-    const productData = buildProductData(req);
+    const productData = await buildProductData(req);
 
     const newProduct = new Product({
       ...productData,
@@ -217,7 +208,33 @@ exports.getProductsByVendor = async (req, res, next) => {
  */
 exports.updateProduct = async (req, res, next) => {
   try {
-    const productData = buildProductData(req);
+    // ✅ Find old product
+    const existingProduct = await Product.findOne({
+      _id: req.params.id,
+      vendorId: req.user.id,
+    });
+
+    if (!existingProduct) {
+      const error = new Error(
+        "Product not found or unauthorized"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    // ✅ IMPORTANT await
+    const productData = await buildProductData(req);
+
+    // ✅ Delete old image if new uploaded
+    if (req.file && existingProduct.images?.length > 0) {
+      await Promise.all(
+        existingProduct.images.map((imgUrl) =>
+          deleteUploadImages3(imgUrl)
+        )
+      );
+    }
 
     const updatedProduct = await Product.findOneAndUpdate(
       {
@@ -231,22 +248,11 @@ exports.updateProduct = async (req, res, next) => {
       }
     );
 
-    if (!updatedProduct) {
-      const error = new Error(
-        "Product not found or unauthorized"
-      );
-
-      error.statusCode = 404;
-
-      return next(error);
-    }
-
     res.json(updatedProduct);
   } catch (error) {
     next(error);
   }
 };
-
 /**
  * DELETE PRODUCT
  */
