@@ -1,6 +1,7 @@
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const { S3Client } = require("@aws-sdk/client-s3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
 const client = new S3Client({
   region: process.env.AWS_REGION,
@@ -49,3 +50,22 @@ exports.upload = multer({
     }
   },
 });
+
+exports.deleteUploadImages3 = async (imageUrl) => {
+  try {
+    const url = new URL(imageUrl);
+
+    const fileKey = decodeURIComponent(url.pathname.substring(1));
+    // example: products/123-image.jpg
+
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: fileKey,
+    });
+
+    await client.send(command);
+  } catch (error) {
+    console.error("S3 Delete Error:", error);
+    throw error;
+  }
+}

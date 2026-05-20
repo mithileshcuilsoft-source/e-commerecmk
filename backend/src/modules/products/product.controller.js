@@ -1,3 +1,4 @@
+const { deleteUploadImages3 } = require("../../middlewares/s3UploadHandler");
 const Product = require("../../models/Product");
 
 
@@ -52,7 +53,7 @@ const cleanObject = (obj) =>
   }, {});
 
 
-  const buildProductData = (req) => {
+  const buildProductData = async(req) => {
     const data = {
       name: req.body.name,
       description: req.body.description,
@@ -76,7 +77,13 @@ const cleanObject = (obj) =>
      */
     if (req.file) {
       console.log("FILE:", req.file);
-  
+    
+      // delete OLD image (from DB, not data)
+      if (existingProduct?.images?.[0]) {
+        await deleteUploadImages3(existingProduct.images[0]);
+      }
+    
+      // set NEW image
       data.images = [req.file.location];
     }
   
@@ -245,23 +252,33 @@ exports.updateProduct = async (req, res, next) => {
  */
 exports.deleteProduct = async (req, res, next) => {
   try {
-    const deletedProduct = await Product.findOneAndDelete({
+    // 1. Get ONLY that product
+    const product = await Product.findOne({
       _id: req.params.id,
       vendorId: req.user.id,
     });
 
-    if (!deletedProduct) {
-      const error = new Error(
-        "Product not found or unauthorized"
-      );
-
+    if (!product) {
+      const error = new Error("Product not found or unauthorized");
       error.statusCode = 404;
-
       return next(error);
     }
 
+    // 2. Delete ONLY this product's images from S3
+    if (product.images && product.images.length > 0) {
+      await Promise.all(
+        product.images.map((imgUrl) =>
+          deleteUploadImages3(imgUrl)
+        )
+      );
+    }
+
+    // 3. Delete ONLY this product from DB
+    await Product.deleteOne({ _id: product._id });
+
     res.json({
-      message: "Product deleted successfully",
+      success: true,
+      message: "Product and its images deleted successfully",
     });
   } catch (error) {
     next(error);

@@ -8,10 +8,6 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
-import SideBarDashboard from "../sidebar/sideBarBoard";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { deleteProduct, getVendorProducts } from "@/api/productapi";
@@ -19,13 +15,14 @@ import { deleteProduct, getVendorProducts } from "@/api/productapi";
 export default function VendorDashboard() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const router = useRouter();
 
+  // ---------------- FETCH PRODUCTS ----------------
   const fetchProducts = async () => {
     try {
       const data = await getVendorProducts();
-
-      console.log("FULL API RESPONSE:", data);
 
       let productsData: any[] = [];
 
@@ -36,8 +33,6 @@ export default function VendorDashboard() {
       } else if (Array.isArray(data.data)) {
         productsData = data.data;
       }
-
-      console.log("FINAL PRODUCTS:", productsData);
 
       setProducts([...productsData]);
     } catch (err) {
@@ -62,41 +57,45 @@ export default function VendorDashboard() {
 
     init();
   }, []);
+
+  // ---------------- DELETE PRODUCT ----------------
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
+      setDeletingId(id);
+
       await deleteProduct(id);
-      fetchProducts();
+
+      // 🔥 instant UI update (no refetch)
+      setProducts((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       console.error("Delete error:", err);
+      alert("Failed to delete product");
+    } finally {
+      setDeletingId(null);
     }
   };
 
+  // ---------------- STOCK STATUS ----------------
   const getStatus = (stock: number) => {
     if (stock === 0) return "Out of Stock";
     if (stock <= 15) return "Low Stock";
     return "In Stock";
   };
 
-
-
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
-      {/* Sidebar */}
-      {/* <aside className="hidden md:flex w-64 flex-col bg-white border-r relative ">
-        <SideBarDashboard />
-      </aside> */}
-
       <div className="flex-1 flex flex-col">
 
-        {/* Main */}
+        {/* MAIN */}
         <main className="p-6 space-y-6 mt-20">
-          {/* Top */}
-          <div className="flex justify-between">
+
+          {/* HEADER */}
+          <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Product List</h2>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <div className="flex items-center bg-white border px-3 py-2 rounded">
                 <Search className="w-4 h-4 mr-2" />
                 <input placeholder="Search..." className="outline-none" />
@@ -106,23 +105,27 @@ export default function VendorDashboard() {
                 <Filter className="w-4 h-4" />
               </button>
             </div>
+
             <Link
-            href="/vendors/add-products"
-            className="bg-black text-white px-4 py-2 rounded-xl text-sm "
-          >
-            Add Product
-          </Link>
+              href="/vendors/add-products"
+              className="bg-black text-white px-4 py-2 rounded-xl text-sm"
+            >
+              Add Product
+            </Link>
           </div>
 
+          {/* STATUS */}
           <p className="text-sm text-gray-500">
             {loading
               ? "Loading products..."
               : `${products.length} products loaded`}
           </p>
 
+          {/* TABLE */}
           <Card className="rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
+
                 <thead className="bg-gray-100 text-xs uppercase">
                   <tr>
                     <th className="p-4 text-left">Product</th>
@@ -145,9 +148,12 @@ export default function VendorDashboard() {
 
                   {products.map((product) => {
                     const status = getStatus(product.stock);
+                    const isDeleting = deletingId === product._id;
 
                     return (
                       <tr key={product._id} className="border-t">
+
+                        {/* PRODUCT */}
                         <td className="p-4 flex items-center gap-3">
                           <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
                             <Package className="w-5 h-5 text-gray-400" />
@@ -155,15 +161,16 @@ export default function VendorDashboard() {
 
                           <div>
                             <p className="font-semibold">{product.name}</p>
-                            <p className="text-xs text-gray-400">
-                              {/* {product._id} */}
-                            </p>
                           </div>
                         </td>
 
+                        {/* CATEGORY */}
                         <td>{product.category}</td>
+
+                        {/* PRICE */}
                         <td>₹{product.price}</td>
 
+                        {/* STOCK */}
                         <td>
                           <div className="flex items-center gap-2">
                             {product.stock}
@@ -173,16 +180,22 @@ export default function VendorDashboard() {
                           </div>
                         </td>
 
+                        {/* STATUS */}
                         <td>
-                          <span className="text-xs font-bold">{status}</span>
+                          <span className="text-xs font-bold">
+                            {status}
+                          </span>
                         </td>
 
+                        {/* ACTIONS */}
                         <td className="text-right pr-6 space-x-2">
+
                           <button
                             onClick={() =>
                               router.push(`/vendors/edit/${product._id}`)
                             }
                             className="text-blue-500"
+                            disabled={isDeleting}
                           >
                             Edit
                           </button>
@@ -190,17 +203,21 @@ export default function VendorDashboard() {
                           <button
                             onClick={() => handleDelete(product._id)}
                             className="text-red-500"
+                            disabled={isDeleting}
                           >
-                            Delete
+                            {isDeleting ? "Deleting..." : "Delete"}
                           </button>
+
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
+
               </table>
             </div>
           </Card>
+
         </main>
       </div>
     </div>
