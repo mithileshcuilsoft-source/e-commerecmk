@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone', // This reduces image size significantly
   images: {
     remotePatterns: [
       {
