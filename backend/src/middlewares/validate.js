@@ -3,7 +3,7 @@ const validate = (schema) => async (req, res, next) => {
     if (!schema) {
       return res.status(500).json({
         success: false,
-        message: "Validation schema missing",
+        message: "Validation schema missing.",
       });
     }
 

@@ -143,7 +143,7 @@ const AdminDashboard = () => {
         totalRevenue,
       });
     } catch (error) {
-      console.error("Failed to load dashboard data test:", error);
+      console.error("Failed to load dash board data test:", error);
     }
   };
 
