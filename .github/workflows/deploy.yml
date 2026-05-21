@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**' # Only trigger if files in backend/ change
+      - 'backend/**'
+      - '.github/workflows/deploy.yml' # Trigger when the pipeline itself is updated
 
 jobs:
   build-and-deploy:
