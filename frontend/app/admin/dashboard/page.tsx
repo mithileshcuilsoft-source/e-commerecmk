@@ -202,82 +202,86 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 sticky top-0 z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <Shield className="w-8 h-8 text-blue-600 shrink-0" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm text-gray-500">Manage your e-commerce platform</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">Admin Dashboard</h1>
+              <p className="text-xs sm:text-sm text-gray-500">Manage your e-commerce platform</p>
             </div>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-            Logout
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto self-end sm:self-center">
+             <Button onClick={handleLogout} variant="outline" size="sm" className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50">
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6 pb-20 sm:pb-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="vendors">Vendors</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+             <TabsList className="flex w-max sm:grid sm:w-full sm:grid-cols-5 min-w-full">
+              <TabsTrigger value="overview" className="px-6">Overview</TabsTrigger>
+              <TabsTrigger value="vendors" className="px-6">Vendors</TabsTrigger>
+              <TabsTrigger value="products" className="px-6">Products</TabsTrigger>
+              <TabsTrigger value="users" className="px-6">Users</TabsTrigger>
+              <TabsTrigger value="orders" className="px-6">Orders</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Users className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalVendors}</div>
                   <p className="text-xs text-muted-foreground">
-                    {stats.blockedVendors} blocked
+                    <span className="text-red-500 font-medium">{stats.blockedVendors}</span> blocked
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <Package className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalProducts}</div>
                   <p className="text-xs text-muted-foreground">
-                    Active products
+                    Live storefront items
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
+                  <UserCheck className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalUsers}</div>
                   <p className="text-xs text-muted-foreground">
-                    Registered buyers
+                    Active customers
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <BarChart3 className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">
-                    From {stats.totalOrders} orders
+                    From {stats.totalOrders} successful orders
                   </p>
                 </CardContent>
               </Card>
@@ -348,33 +352,35 @@ const AdminDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                   {vendors.map((vendor) => (
-                    <div key={vendor._id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={vendor._id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-xl gap-4 bg-white hover:border-blue-100 transition-colors">
                       <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12">
+                        <Avatar className="w-12 h-12 border-2 border-gray-100">
                           <AvatarImage src={vendor.image} />
-                          <AvatarFallback>{vendor.name?.charAt(0) || "V"}</AvatarFallback>
+                          <AvatarFallback className="bg-blue-50 text-blue-600 font-bold">{vendor.name?.charAt(0) || "V"}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className="font-semibold">{vendor.name || "Unknown Vendor"}</h3>
-                          <p className="text-sm text-gray-500">{vendor.email}</p>
-                          <p className="text-sm text-gray-500">{vendor.phone || "No phone"}</p>
+                          <h3 className="font-bold text-gray-900">{vendor.name || "Unknown Vendor"}</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[150px] sm:max-w-none">{vendor.email}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                             <Badge variant={vendor.isBlocked ? "destructive" : "default"} className="scale-90 origin-left">
+                              {vendor.isBlocked ? "Blocked" : "Active"}
+                            </Badge>
+                            <span className="text-[10px] text-gray-400 font-mono">ID: {vendor._id.slice(-6)}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={vendor.isBlocked ? "destructive" : "default"}>
-                          {vendor.isBlocked ? "Blocked" : "Active"}
-                        </Badge>
-                        <div className="flex gap-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50">
+                        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                           {vendor.isBlocked ? (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleUnblockVendor(vendor._id)}
-                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              className="flex-1 sm:flex-none text-green-600 border-green-200 hover:bg-green-50 h-9"
                             >
-                              <CheckCircle className="w-4 h-4 mr-1" />
+                              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                               Unblock
                             </Button>
                           ) : (
@@ -382,9 +388,9 @@ const AdminDashboard = () => {
                               size="sm"
                               variant="outline"
                               onClick={() => handleBlockVendor(vendor._id)}
-                              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                              className="flex-1 sm:flex-none text-orange-600 border-orange-200 hover:bg-orange-50 h-9"
                             >
-                              <UserX className="w-4 h-4 mr-1" />
+                              <UserX className="w-3.5 h-3.5 mr-1.5" />
                               Block
                             </Button>
                           )}
@@ -392,9 +398,9 @@ const AdminDashboard = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteVendor(vendor._id)}
-                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            className="flex-1 sm:flex-none text-red-600 border-red-200 hover:bg-red-50 h-9"
                           >
-                            <Trash2 className="w-4 h-4 mr-1" />
+                            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                             Delete
                           </Button>
                         </div>
@@ -498,22 +504,38 @@ const AdminDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
                   {orders.map((order:any) => (
-                    <div key={order._id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h3 className="font-semibold">Order #{order._id.slice(-8)}</h3>
-                        <p className="text-sm text-gray-500">{order.userId?.name} ({order.userId?.email})</p>
-                        <p className="text-sm text-gray-500">
-                          {order.items.length} items • {new Date(order.createdAt).toLocaleDateString()}
-                        </p>
-                        {order.trackingNumber && (
-                          <p className="text-sm text-blue-600">Tracking: {order.trackingNumber}</p>
-                        )}
+                    <div key={order._id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-xl gap-6 bg-white hover:border-blue-100 transition-colors shadow-sm">
+                      <div className="flex-1 w-full">
+                        <div className="flex justify-between items-start mb-2">
+                           <h3 className="font-bold text-gray-900">Order #{order._id.slice(-8)}</h3>
+                           <Badge variant={
+                            order.status === "delivered" ? "default" :
+                            order.status === "cancelled" || order.status === "refunded" ? "destructive" :
+                            order.status === "shipped" ? "secondary" :
+                            "outline"
+                          } className="md:hidden">
+                            {order.status}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-gray-700">{order.userId?.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{order.userId?.email}</p>
+                          <p className="text-xs text-gray-400 mt-2">
+                            {order.items.length} items • {new Date(order.createdAt).toLocaleDateString()}
+                          </p>
+                          {order.trackingNumber && (
+                            <p className="text-xs font-semibold text-blue-600 bg-blue-50 w-fit px-2 py-0.5 rounded mt-2">
+                              🚢 {order.trackingNumber}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-bold text-lg">₹{order.total.toFixed(2)}</p>
+                      
+                      <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 gap-4">
+                        <div className="text-left md:text-right">
+                          <p className="text-lg font-black text-gray-900 leading-none mb-1">₹{order.total.toFixed(2)}</p>
                           <select
                             value={order.status}
                             onChange={(e) => {
@@ -531,7 +553,7 @@ const AdminDashboard = () => {
                                 handleUpdateOrderStatus(order._id, newStatus, trackingNumber, note);
                               }
                             }}
-                            className="mt-2 px-3 py-1 border rounded-md text-sm"
+                            className="px-2 py-1 border rounded-lg text-xs bg-gray-50 font-medium focus:ring-2 focus:ring-blue-500 outline-none"
                           >
                             <option value="placed">Placed</option>
                             <option value="confirmed">Confirmed</option>
@@ -547,7 +569,7 @@ const AdminDashboard = () => {
                           order.status === "cancelled" || order.status === "refunded" ? "destructive" :
                           order.status === "shipped" ? "secondary" :
                           "outline"
-                        }>
+                        } className="hidden md:inline-flex">
                           {order.status}
                         </Badge>
                       </div>
