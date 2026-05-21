@@ -1,6 +1,12 @@
 # Stage 1: Build stage
 FROM node:22-slim AS builder
 WORKDIR /app
+
+# Define the build-time argument
+ARG NEXT_PUBLIC_API_URL
+# Set it as an environment variable so Next.js can pick it up during build
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package*.json ./
 RUN npm install
 COPY . .
