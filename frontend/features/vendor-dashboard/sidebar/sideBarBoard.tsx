@@ -11,7 +11,7 @@ import {
   Package,
 } from "lucide-react";
 
-const SideBarDashboard = () => {
+const SideBarDashboard = ({ onNavItemClick }: { onNavItemClick?: () => void }) => {
   const pathname = usePathname();
 
   const menuItems = [
@@ -52,6 +52,7 @@ const SideBarDashboard = () => {
         <Link
           key={item.name}
           href={item.href}
+          onClick={onNavItemClick}
           className={`flex items-center gap-3 px-3 sm:px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
             isActive
               ? "bg-purple-50 text-purple-600"
