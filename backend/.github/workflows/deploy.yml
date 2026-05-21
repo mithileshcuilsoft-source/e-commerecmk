@@ -1,0 +1,60 @@
+name: Docker CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the source code from GitHub
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Log in to Docker Hub using a Personal Access Token (PAT)
+      # Secrets DOCKER_USERNAME and DOCKER_PAT must be set in GitHub Settings
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PAT }}
+
+      # 3. Build the Docker image
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/backend-app:latest .
+
+      # 4. Push the image to Docker Hub
+      - name: Push Image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
+
+      # 5. Deploy to EC2 via SSH
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Login to Docker Hub on the EC2 instance to pull private images if necessary
+            echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # Pull the latest image
+            docker pull ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
+
+            # Stop and remove the old container
+            docker stop backend-app || true
+            docker rm backend-app || true
+
+            # Run the new container
+            docker run -d \
+              --name backend-app \
+              -p 5000:5000 \
+              --restart always \
+              --env-file /home/${{ secrets.EC2_USER }}/.env \
+              ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
+
+            # Clean up
+            docker image prune -f
