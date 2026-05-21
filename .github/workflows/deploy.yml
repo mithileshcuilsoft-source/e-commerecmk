@@ -54,7 +54,7 @@ jobs:
               --name backend-app \
               -p 5000:5000 \
               --restart always \
-              --env-file /home/${{ secrets.EC2_USER }}/.env \
+              --env-file /home/${{ secrets.EC2_USER }}projects/environment/.env \
               ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
 
             # Clean up
