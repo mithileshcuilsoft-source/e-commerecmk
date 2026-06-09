@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
 import Link from "next/link";
 
-export default function PaymentSuccess() {
-  const router = useRouter();
+function SuccessContent() {
   const searchParams = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
   
@@ -50,5 +49,13 @@ export default function PaymentSuccess() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccess() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }

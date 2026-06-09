@@ -1,9 +1,21 @@
-const stripe = require("stripe")(process.env.SECRET_KEY);
+let stripeInstance = null;
+
+const getStripe = () => {
+  if (stripeInstance) return stripeInstance;
+  const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.SECRET_KEY;
+  if (!stripeKey) {
+    throw new Error("Stripe SECRET_KEY is not defined in environment variables!");
+  }
+  stripeInstance = require("stripe")(stripeKey);
+  return stripeInstance;
+};
+
 const Order = require("../../models/Order");
 const Product = require("../../models/Product");
 
 exports.createCheckoutSession = async (req, res, next) => {
   try {
+    const stripe = getStripe();
     const { orderId } = req.body;
 
     const order = await Order.findById(orderId).populate("items.productId");
@@ -56,22 +68,17 @@ exports.createCheckoutSession = async (req, res, next) => {
     }
 
     // Handle discount if any
-    // Note: Stripe Checkout handles discounts better with Coupons, 
-    // but for simplicity we can subtract it from a "Discount" item if it's not too complex.
-    // However, Stripe doesn't allow negative line items easily.
-    // Better way: use stripe coupons or just adjust the items.
-    // For now, let's just add a negative line item if stripe allows or adjust the total.
     if (order.discount > 0) {
-        lineItems.push({
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "Discount",
-              },
-              unit_amount: -Math.round(order.discount * 100),
-            },
-            quantity: 1,
-          });
+      lineItems.push({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Discount",
+          },
+          // unit_amount: -Math.round(order.discount * 100),
+        },
+        quantity: 1,
+      });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -98,17 +105,18 @@ exports.stripeWebhook = async (req, res) => {
   let event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    console.error(`❌ Webhook Error: ${err.message}`);
+    console.error(` Webhook Error: ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log(`🔔 Received Stripe Event: ${event.type}`);
+  console.log(` Received Stripe Event: ${event.type}`);
 
   switch (event.type) {
     case "checkout.session.completed":
@@ -126,9 +134,9 @@ exports.stripeWebhook = async (req, res) => {
             currency: session.currency,
           },
         });
-        console.log(`✅ Order ${orderId} marked as paid.`);
+        console.log(`Order ${orderId} marked as paid.`);
       } catch (error) {
-        console.error("❌ Error updating order on webhook:", error);
+        console.error(" Error updating order on webhook:", error);
       }
       break;
     }
@@ -142,16 +150,16 @@ exports.stripeWebhook = async (req, res) => {
           await Order.findByIdAndUpdate(orderId, {
             paymentStatus: "failed",
           });
-          console.log(`⚠️ Order ${orderId} payment failed.`);
+          console.log(`Order ${orderId} payment failed.`);
         } catch (error) {
-          console.error("❌ Error updating order status on failure:", error);
+          console.error("Error updating order status on failure:", error);
         }
       }
       break;
     }
 
     default:
-      console.log(`ℹ️ Unhandled event type ${event.type}`);
+      console.log(`Unhandled event type ${event.type}`);
   }
 
   res.json({ received: true });

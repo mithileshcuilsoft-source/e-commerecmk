@@ -61,6 +61,9 @@ jobs:
               --name backend-app \
               -p 5000:5000 \
               --restart always \
+              -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
+              -e STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }} \
+              -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
               --env-file /home/${{ secrets.EC2_USER }}/projects/environment/.env \
               ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
             docker image prune -f
@@ -83,6 +86,8 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }} \
+            --build-arg NEXT_PUBLIC_FRONTEND_URL=${{ secrets.NEXT_PUBLIC_FRONTEND_URL }} \
             -t ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest ./frontend
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
 
