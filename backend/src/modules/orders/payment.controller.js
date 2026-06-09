@@ -26,60 +26,64 @@ exports.createCheckoutSession = async (req, res, next) => {
     if (order.userId.toString() !== req.user.id) {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
+const lineItems = order.items.map((item) => ({
+  price_data: {
+    currency: "usd",
+    product_data: {
+      name: item.productId.name,
+      images: item.productId.images?.length
+        ? [item.productId.images[0]]
+        : [],
+    },
+    unit_amount: Math.round(item.price * 100),
+  },
+  quantity: item.quantity,
+}));
 
-    const lineItems = order.items.map((item) => ({
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: item.productId.name,
-          images: item.productId.images?.length ? [item.productId.images[0]] : [],
-        },
-        unit_amount: Math.round(item.price * 100), // Stripe expects amounts in cents
+
+if (order.shippingCost > 0) {
+  lineItems.push({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: "Shipping Fee",
       },
-      quantity: item.quantity,
-    }));
-
-    // Add shipping cost if any
-    if (order.shippingCost > 0) {
-      lineItems.push({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Shipping Fee",
-          },
-          unit_amount: Math.round(order.shippingCost * 100),
-        },
-        quantity: 1,
-      });
-    }
+      unit_amount: Math.round(order.shippingCost * 100),
+    },
+    quantity: 1,
+  });
+}
 
     // Add tax if any
-    if (order.tax > 0) {
-      lineItems.push({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Tax",
-          },
-          unit_amount: Math.round(order.tax * 100),
-        },
-        quantity: 1,
-      });
-    }
+if (order.tax > 0) {
+  lineItems.push({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: "Tax",
+      },
+      unit_amount: Math.round(order.tax * 100),
+    },
+    quantity: 1,
+  });
+}
 
     // Handle discount if any
-    if (order.discount > 0) {
-      lineItems.push({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Discount",
-          },
-          // unit_amount: -Math.round(order.discount * 100),
-        },
-        quantity: 1,
-      });
-    }
+// REMOVE THIS ENTIRE BLOCK
+// if (order.discount > 0) {
+//   lineItems.push({
+//     price_data: {
+//       currency: "usd",
+//       product_data: {
+//         name: "Discount",
+//       },
+//       unit_amount: -Math.round(order.discount * 100),
+//     },
+//     quantity: 1,
+//   });
+// }
+    console.log("LINE ITEMS");
+    console.log(JSON.stringify(lineItems, null, 2));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
