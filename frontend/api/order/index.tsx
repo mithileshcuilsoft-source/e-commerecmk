@@ -213,3 +213,9 @@ export const calculateCheckout =
       return error.response?.data;
     }
   };
+export const createCheckoutSession = async (orderId: string) => {
+  const response = await apiClient.post("/payment/create-checkout-session", {
+    orderId,
+  });
+  return response.data;
+};

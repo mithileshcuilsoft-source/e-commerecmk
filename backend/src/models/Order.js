@@ -75,8 +75,19 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["credit_card", "debit_card", "paypal", "cash_on_delivery"],
-      default: "credit_card",
+      enum: ["credit_card", "debit_card", "cash_on_delivery", "stripe"],
+      default: "stripe",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    paymentDetails: {
+      sessionId: String,
+      paymentIntentId: String,
+      amountTotal: Number,
+      currency: String,
     },
     trackingNumber: {
       type: String,

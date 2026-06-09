@@ -7,8 +7,16 @@ const centrErrorHandler = require("./src/middlewares/centrErrorHandler");
 
 const app = express();
 
-// 2. Enable CORS (Must be BEFORE routes)
+// Enable CORS (Must be BEFORE routes)
 app.use(cors());
+
+// Stripe Webhook needs raw body
+const paymentCtrl = require("./src/modules/orders/payment.controller");
+app.post(
+  "/payment/webhook",
+  express.raw({ type: "application/json" }),
+  paymentCtrl.stripeWebhook
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

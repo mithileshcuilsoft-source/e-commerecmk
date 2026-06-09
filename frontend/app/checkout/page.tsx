@@ -12,6 +12,7 @@ import {
 import {
   createOrder,
   calculateCheckout,
+  createCheckoutSession,
 } from "@/api/order";
 
 import { getAddresses } from "@/api/address";
@@ -29,7 +30,7 @@ const CheckoutPage = () => {
 
   const [selectedAddressId,setSelectedAddressId,] = useState("");
 
-  const [paymentMethod,setPaymentMethod,] = useState("cash_on_delivery");
+  const [paymentMethod,setPaymentMethod,] = useState("stripe");
 
   const [notes, setNotes] =useState("");
 
@@ -202,9 +203,18 @@ const CheckoutPage = () => {
             notes,
           };
 
-        await createOrder(
+        const res = await createOrder(
           orderPayload
         );
+
+        if (paymentMethod === "stripe") {
+          const session = await createCheckoutSession(res.order._id);
+          if (session.url) {
+            window.location.href = session.url;
+            return;
+          }
+        }
+
         await clearCart();
         setSuccess(
           "Order placed successfully."
@@ -315,16 +325,12 @@ const CheckoutPage = () => {
               className="w-full rounded-xl border p-3"
             >
 
+              <option value="stripe">
+                Credit/Debit Card (Stripe)
+              </option>
+
               <option value="cash_on_delivery">
                 Cash on Delivery
-              </option>
-
-              <option value="credit_card">
-                Credit Card
-              </option>
-
-              <option value="debit_card">
-                Debit Card
               </option>
 
               <option value="paypal">

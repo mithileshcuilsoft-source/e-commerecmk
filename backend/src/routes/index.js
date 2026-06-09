@@ -15,5 +15,6 @@ router.use("/orders", orderRoutes);
 router.use("/addresses", addressRoutes);
 router.use("/cart", cartRoutes);
 router.use("/admin", protect, adminRoutes);
+router.use("/payment", require("./payment.routes"));
 
 module.exports = router;
