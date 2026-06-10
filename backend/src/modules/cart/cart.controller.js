@@ -93,9 +93,12 @@ let cart = await Cart.findOneAndUpdate(
     },
   },
   {
-    new: true,
     upsert: true,
+    new: true,
   }
+).populate(
+  "items.productId",
+  "name price images stock isActive variants"
 );
     // CHECK EXISTING ITEM
     const existingItem = cart.items.find((item) => {

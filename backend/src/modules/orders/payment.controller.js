@@ -105,6 +105,8 @@ if (order.tax > 0) {
 };
 
 exports.stripeWebhook = async (req, res) => {
+  console.log("SIGNATURE:", req.headers["stripe-signature"]);
+  console.log("WEBHOOK SECRET:", process.env.STRIPE_WEBHOOK_SECRET);
   const sig = req.headers["stripe-signature"];
   let event;
 
