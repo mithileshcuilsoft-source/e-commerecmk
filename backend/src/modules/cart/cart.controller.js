@@ -84,19 +84,19 @@ exports.addToCart = async (req, res, next) => {
       });
     }
 
-    // FIND CART
-    let cart = await Cart.findOne({
+let cart = await Cart.findOneAndUpdate(
+  { userId: req.user.id },
+  {
+    $setOnInsert: {
       userId: req.user.id,
-    });
-
-    // CREATE CART
-    if (!cart) {
-      cart = await Cart.create({
-        userId: req.user.id,
-        items: [],
-      });
-    }
-
+      items: [],
+    },
+  },
+  {
+    new: true,
+    upsert: true,
+  }
+);
     // CHECK EXISTING ITEM
     const existingItem = cart.items.find((item) => {
       return (
