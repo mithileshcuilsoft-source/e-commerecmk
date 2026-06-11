@@ -1,11 +1,12 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { getToken, isUserLoggedIn } from "./auth";
 import { toast } from "react-hot-toast";
-import { config as apiConfig } from "@/api/config";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Create proxy instance
 const proxy = axios.create({
-  baseURL: apiConfig.apiUrl,
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 

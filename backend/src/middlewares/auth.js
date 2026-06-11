@@ -1,16 +1,16 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/user");
-const env = require("../config/env");
 
-exports.protect = async (req, res, next) => {
-  let token = req.headers.authorization;
+  const jwt = require("jsonwebtoken");
+  const User = require("../models/user");
 
-  if (!token) return res.status(401).json({ msg: "No token" });
-  if (token.startsWith("Bearer ")) token = token.slice(7);
+  exports.protect = async (req, res, next) => {
+    let token = req.headers.authorization;
 
-  try {
-    const decoded = jwt.verify(token, env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    if (!token) return res.status(401).json({ msg: "No token" });
+    if (token.startsWith("Bearer ")) token = token.slice(7);
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
+      const user = await User.findById(decoded.id);
 
       if (!user) return res.status(401).json({ msg: "Invalid token" });
       if (user.role === "vendor" && user.isBlocked) {

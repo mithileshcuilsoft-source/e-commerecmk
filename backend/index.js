@@ -1,12 +1,13 @@
-const env = require("./src/config/env");
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+const cors = require("cors"); // 1. Import CORS
 const router = require("./src/routes/index");
 const centrErrorHandler = require("./src/middlewares/centrErrorHandler");
 
 const app = express();
 
+// Enable CORS (Must be BEFORE routes)
 app.use(cors());
 
 // Stripe Webhook needs raw body
@@ -22,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 mongoose
-  .connect(env.MONGO_URI)
+  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/ecommerces")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
@@ -42,7 +43,8 @@ app.use((err, req, res, next) => {
 
 app.use(centrErrorHandler);
 
-const port = env.PORT;
+// 3. Change Port to 5000 to match your Next.js Axios baseURL
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
-  console.log(`Server running in ${env.NODE_ENV} mode on port ${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });

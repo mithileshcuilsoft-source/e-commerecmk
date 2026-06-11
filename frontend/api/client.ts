@@ -1,5 +1,4 @@
 import axios from "axios";
-import { config as apiConfig } from "./config";
 
 // =========================
 // GET COOKIE
@@ -28,7 +27,7 @@ const getCookie = (name: string) => {
 // =========================
 
 const apiClient = axios.create({
-  baseURL: apiConfig.apiUrl,
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
 
   timeout: 10000,
 });
