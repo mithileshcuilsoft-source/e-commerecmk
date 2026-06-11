@@ -76,6 +76,7 @@ jobs:
               --env-file /data/projects/projects/environment/.env \
               ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
             
+            
             # Brief wait and verify
             sleep 5
             docker ps | grep backend-app
