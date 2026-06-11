@@ -32,7 +32,7 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || contains(github.event.head_commit.message, '[all]')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      
         uses: actions/checkout@v4
 
       - name: Login to Docker Hub
