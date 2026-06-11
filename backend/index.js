@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/ecommerces")
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
