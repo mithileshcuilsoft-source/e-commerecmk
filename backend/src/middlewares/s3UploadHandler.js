@@ -3,19 +3,21 @@ const multerS3 = require("multer-s3");
 const { S3Client } = require("@aws-sdk/client-s3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
-const client = new S3Client({
-  region: process.env.AWS_REGION,
-
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
-  },
-});
-
 const s3Bucket = process.env.AWS_BUCKET_NAME;
+const s3Region = process.env.AWS_REGION;
 
 let storage;
-if (s3Bucket) {
+let client;
+
+if (s3Bucket && s3Region) {
+  client = new S3Client({
+    region: s3Region,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY,
+      secretAccessKey: process.env.AWS_SECRET_KEY,
+    },
+  });
+
   storage = multerS3({
     s3: client,
     bucket: s3Bucket,
@@ -31,9 +33,11 @@ if (s3Bucket) {
     },
   });
 } else {
-  console.error("CRITICAL WARNING: AWS_BUCKET_NAME is not defined. Image uploads will fail, but server is staying online.");
-  storage = multer.memoryStorage(); // Fallback to memory so it doesn't crash on boot
+  console.error("CRITICAL WARNING: AWS S3 is not correctly configured (Region or Bucket missing). Image uploads will fail, but server is staying online.");
+  storage = multer.memoryStorage();
 }
+
+exports.s3Client = client; // Export in case needed elsewhere
 
 exports.upload = multer({
   storage,
@@ -58,6 +62,10 @@ exports.upload = multer({
 });
 
 exports.deleteUploadImages3 = async (imageUrl) => {
+  if (!client) {
+    console.warn("S3 client not initialized. Skipping image deletion.");
+    return;
+  }
   try {
     const url = new URL(imageUrl);
 
