@@ -10,7 +10,26 @@ on:
       - '.github/workflows/deploy.yml'
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
   backend-deploy:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || contains(github.event.head_commit.message, '[all]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -57,6 +76,8 @@ jobs:
             docker ps | grep backend-app
 
   frontend-deploy:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || contains(github.event.head_commit.message, '[all]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -85,9 +106,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            # Clean up FIRST to make room for the new image
-            docker system prune -af --volumes
-
             docker pull ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
             docker stop frontend-app || true
             docker rm frontend-app || true
@@ -96,3 +114,5 @@ jobs:
               -p 3000:3000 \
               --restart always \
               ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
+            # Thorough cleanup to prevent "No space left on device"
+            docker system prune -af --volumes
