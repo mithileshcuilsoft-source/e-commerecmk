@@ -73,6 +73,7 @@ jobs:
               -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
               -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
               -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKET_NAME }}" \
+              --env-file /data/projects/projects/environment/.env \
               ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
             
             # Brief wait and verify
