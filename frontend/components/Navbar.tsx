@@ -162,6 +162,11 @@ const Navbar = () => {
                       </Link>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/cart">
+                      My Cart
+                    </Link>
+                  </DropdownMenuItem>
 
                   <DropdownMenuItem>
                     Settings
