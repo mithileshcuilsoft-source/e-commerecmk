@@ -325,7 +325,7 @@ const Navbar = () => {
                href="/cart"
                className="block text-sm font-medium hover:text-blue-600"
                >
-                Cart
+                My Cart
                </Link>
               <button
                 onClick={handleLogout}
