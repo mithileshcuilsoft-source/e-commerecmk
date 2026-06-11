@@ -1,11 +1,18 @@
 const Stripe = require("stripe");
 const Plan = require("../../models/Plan");
 
-const stripe = Stripe(
-  process.env.STRIPE_SECRET_KEY
-);
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+} else {
+  console.error("CRITICAL WARNING: STRIPE_SECRET_KEY is not defined. Subscription features will fail, but server is staying online.");
+}
 
 exports.getStripePlans = async () => {
+  if (!stripe) {
+    console.warn("Stripe not initialized. Returning empty plans.");
+    return [];
+  }
   const products = await stripe.products.list({ 
     active: true,
     expand: ['data.default_price', 'data.marketing_features'] 
@@ -32,6 +39,9 @@ exports.getStripePlans = async () => {
 };
 
 exports.createCheckoutSession = async (id, userId) => {
+  if (!stripe) {
+    throw new Error("Stripe is not configured on this server. Please contact an administrator.");
+  }
   let stripePriceId = id;
 
   // 1. If it's a MongoDB ID, find the plan in our DB

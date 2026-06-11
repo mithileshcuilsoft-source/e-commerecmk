@@ -4,7 +4,8 @@ const getStripe = () => {
   if (stripeInstance) return stripeInstance;
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
-    throw new Error("Stripe SECRET_KEY is not defined in environment variables!");
+    console.error("CRITICAL WARNING: STRIPE_SECRET_KEY is not defined. Payments and subscriptions will not work, but server is staying online.");
+    return null;
   }
   stripeInstance = require("stripe")(stripeKey);
   return stripeInstance;
