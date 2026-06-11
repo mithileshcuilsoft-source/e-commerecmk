@@ -37,7 +37,17 @@ const userSchema = new mongoose.Schema({
   addresses: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Address"
-  }]
+  }],
+  subscription: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Subscription",
+  default: null,
+},
+
+isPremium: {
+  type: Boolean,
+  default: false,
+},
 });
 
 module.exports = mongoose.model("User", userSchema);

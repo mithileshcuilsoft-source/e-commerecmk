@@ -2,7 +2,7 @@ let stripeInstance = null;
 
 const getStripe = () => {
   if (stripeInstance) return stripeInstance;
-  const stripeKey = process.env.STRIPE_SECRET_KEY || process.env.SECRET_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
     throw new Error("Stripe SECRET_KEY is not defined in environment variables!");
   }
@@ -128,21 +128,99 @@ exports.stripeWebhook = async (req, res) => {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
       const session = event.data.object;
-      const orderId = session.metadata.orderId;
+      
+      // Handle Order Payment
+      if (session.mode === "payment") {
+        const orderId = session.metadata.orderId;
+        try {
+          await Order.findByIdAndUpdate(orderId, {
+            paymentStatus: "paid",
+            paymentDetails: {
+              sessionId: session.id,
+              paymentIntentId: session.payment_intent,
+              amountTotal: session.amount_total / 100,
+              currency: session.currency,
+            },
+          });
+          console.log(`Order ${orderId} marked as paid.`);
+        } catch (error) {
+          console.error(" Error updating order on webhook:", error);
+        }
+      } 
+      
+      // Handle Subscription
+      if (session.mode === "subscription") {
+        const userId = session.metadata.userId;
+        const planId = session.metadata.planId;
+        const stripeSubscriptionId = session.subscription;
+        const stripeCustomerId = session.customer;
 
+        const Subscription = require("../../models/Subscription");
+        const stripe = getStripe();
+        const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const price = subscription.items.data[0].price;
+
+        const updateData = {
+          stripeSubscriptionId,
+          stripeCustomerId,
+          stripePriceId: price.id,
+          stripeProductId: price.product,
+          price: price.unit_amount / 100,
+          currency: price.currency,
+          status: "active",
+          currentPeriodStart: new Date(subscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        };
+
+        // If planId is a MongoDB ID, link it
+        if (planId.match(/^[0-9a-fA-F]{24}$/)) {
+          updateData.plan = planId;
+        }
+
+        try {
+          await Subscription.findOneAndUpdate(
+            { user: userId },
+            updateData,
+            { upsert: true, new: true }
+          );
+          console.log(`Subscription for user ${userId} activated.`);
+        } catch (error) {
+          console.error(" Error updating subscription on webhook:", error);
+        }
+      }
+      break;
+    }
+
+    case "customer.subscription.updated": {
+      const subscription = event.data.object;
+      const Subscription = require("../../models/Subscription");
       try {
-        await Order.findByIdAndUpdate(orderId, {
-          paymentStatus: "paid",
-          paymentDetails: {
-            sessionId: session.id,
-            paymentIntentId: session.payment_intent,
-            amountTotal: session.amount_total / 100,
-            currency: session.currency,
-          },
-        });
-        console.log(`Order ${orderId} marked as paid.`);
+        await Subscription.findOneAndUpdate(
+          { stripeSubscriptionId: subscription.id },
+          {
+            status: subscription.status,
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          }
+        );
+        console.log(`Subscription ${subscription.id} updated to ${subscription.status}`);
       } catch (error) {
-        console.error(" Error updating order on webhook:", error);
+        console.error(" Error updating subscription on update event:", error);
+      }
+      break;
+    }
+
+    case "customer.subscription.deleted": {
+      const subscription = event.data.object;
+      const Subscription = require("../../models/Subscription");
+      try {
+        await Subscription.findOneAndUpdate(
+          { stripeSubscriptionId: subscription.id },
+          { status: "cancelled" }
+        );
+        console.log(`Subscription ${subscription.id} cancelled.`);
+      } catch (error) {
+        console.error(" Error updating subscription on delete event:", error);
       }
       break;
     }

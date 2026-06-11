@@ -4,6 +4,7 @@ import Link from "next/link";
 import React from "react";
 import { useRouter } from "next/navigation";
 
+import { Crown } from "lucide-react";
 import { Button } from "./ui/button";
 
 import {
@@ -79,6 +80,13 @@ const Navbar = () => {
             className="text-sm font-medium hover:text-blue-600"
           >
             Products
+          </Link>
+
+          <Link
+            href="/subscription"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            <Crown className="h-4 w-4" /> Premium
           </Link>
 
           {isLoggedIn ? (
@@ -220,6 +228,13 @@ const Navbar = () => {
           </Link>
 
           <Link
+            href="/subscription"
+            className="block text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            <Crown className="h-4 w-4" /> Premium
+          </Link>
+
+          <Link
             href="/about"
             className="block text-sm font-medium hover:text-blue-600"
           >
@@ -306,7 +321,12 @@ const Navbar = () => {
                   My Orders
                 </Link>
               )}
-
+               <Link
+               href="/cart"
+               className="block text-sm font-medium hover:text-blue-600"
+               >
+                Cart
+               </Link>
               <button
                 onClick={handleLogout}
                 className="w-full rounded-full bg-red-500 px-4 py-2 text-white"

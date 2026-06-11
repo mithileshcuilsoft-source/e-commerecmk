@@ -7,6 +7,7 @@ const userRoutes = require("./user.routes");
 const { protect } = require("../middlewares/auth");
 const adminRoutes = require("./admin.routes");
 const router = require("express").Router();
+const subscriptionRoutes = require("./subscription.routes");
 
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
@@ -16,5 +17,6 @@ router.use("/addresses", addressRoutes);
 router.use("/cart", cartRoutes);
 router.use("/admin", protect, adminRoutes);
 router.use("/payment", require("./payment.routes"));
+router.use("/subscription",subscriptionRoutes);
 
 module.exports = router;
