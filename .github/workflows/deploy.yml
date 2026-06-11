@@ -32,7 +32,7 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || contains(github.event.head_commit.message, '[all]')
     runs-on: ubuntu-latest
     steps:
-      
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Login to Docker Hub
@@ -66,7 +66,8 @@ jobs:
               -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
               --env-file /home/${{ secrets.EC2_USER }}/projects/environment/.env \
               ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
-            docker image prune -f
+            # Thorough cleanup to prevent "No space left on device"
+            docker system prune -af --volumes
 
   frontend-deploy:
     needs: changes
@@ -107,4 +108,5 @@ jobs:
               -p 3000:3000 \
               --restart always \
               ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
-            docker image prune -f
+            # Thorough cleanup to prevent "No space left on device"
+            docker system prune -af --volumes
