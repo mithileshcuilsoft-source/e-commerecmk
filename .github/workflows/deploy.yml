@@ -61,11 +61,17 @@ jobs:
               --name backend-app \
               -p 5000:5000 \
               --restart always \
-              -e STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }} \
-              -e STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }} \
-              -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
-              --env-file /home/${{ secrets.EC2_USER }}/projects/environment/.env \
+              -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
+              -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+              -e FRONTEND_URL="${{ secrets.FRONTEND_URL }}" \
               ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
+            
+            # Brief wait and verify
+            sleep 5
+            docker ps | grep backend-app
+            
             # Thorough cleanup to prevent "No space left on device"
             docker system prune -af --volumes
 
