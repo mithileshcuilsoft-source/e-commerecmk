@@ -12,25 +12,31 @@ const client = new S3Client({
   },
 });
 
-exports.upload = multer({
-  storage: multerS3({
+const s3Bucket = process.env.AWS_BUCKET_NAME;
+
+let storage;
+if (s3Bucket) {
+  storage = multerS3({
     s3: client,
-    bucket: process.env.AWS_BUCKET_NAME,
-
+    bucket: s3Bucket,
     contentType: multerS3.AUTO_CONTENT_TYPE,
-
     key: (req, file, cb) => {
       const sanitizedName = file.originalname
         .toLowerCase()
         .trim()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9.-]/g, "");
-
       const fileName = `${Date.now()}-${sanitizedName}`;
-
       cb(null, `products/${fileName}`);
     },
-  }),
+  });
+} else {
+  console.error("CRITICAL WARNING: AWS_BUCKET_NAME is not defined. Image uploads will fail, but server is staying online.");
+  storage = multer.memoryStorage(); // Fallback to memory so it doesn't crash on boot
+}
+
+exports.upload = multer({
+  storage,
 
   limits: {
     fileSize: 10 * 1024 * 1024,
