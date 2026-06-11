@@ -54,6 +54,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            # Clean up FIRST to make room for the new image
+            docker system prune -af --volumes
+            
             docker pull ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
             docker stop backend-app || true
             docker rm backend-app || true
@@ -71,9 +74,6 @@ jobs:
             # Brief wait and verify
             sleep 5
             docker ps | grep backend-app
-            
-            # Thorough cleanup to prevent "No space left on device"
-            docker system prune -af --volumes
 
   frontend-deploy:
     needs: changes
@@ -106,6 +106,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            # Clean up FIRST to make room for the new image
+            docker system prune -af --volumes
+
             docker pull ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
             docker stop frontend-app || true
             docker rm frontend-app || true
@@ -114,5 +117,3 @@ jobs:
               -p 3000:3000 \
               --restart always \
               ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
-            # Thorough cleanup to prevent "No space left on device"
-            docker system prune -af --volumes
