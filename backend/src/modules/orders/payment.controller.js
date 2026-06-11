@@ -1,12 +1,10 @@
+const env = require("../../config/env");
+
 let stripeInstance = null;
 
 const getStripe = () => {
   if (stripeInstance) return stripeInstance;
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeKey) {
-    throw new Error("Stripe SECRET_KEY is not defined in environment variables!");
-  }
-  stripeInstance = require("stripe")(stripeKey);
+  stripeInstance = require("stripe")(env.STRIPE_SECRET_KEY);
   return stripeInstance;
 };
 
@@ -89,8 +87,8 @@ if (order.tax > 0) {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&orderId=${order._id}`,
-      cancel_url: `${process.env.FRONTEND_URL}/payment/cancel?orderId=${order._id}`,
+      success_url: `${env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&orderId=${order._id}`,
+      cancel_url: `${env.FRONTEND_URL}/payment/cancel?orderId=${order._id}`,
       metadata: {
         orderId: order._id.toString(),
         userId: req.user.id.toString(),
@@ -105,8 +103,6 @@ if (order.tax > 0) {
 };
 
 exports.stripeWebhook = async (req, res) => {
-  console.log("SIGNATURE:", req.headers["stripe-signature"]);
-  console.log("WEBHOOK SECRET:", process.env.STRIPE_WEBHOOK_SECRET);
   const sig = req.headers["stripe-signature"];
   let event;
 
@@ -115,7 +111,7 @@ exports.stripeWebhook = async (req, res) => {
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+      env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
     console.error(` Webhook Error: ${err.message}`);

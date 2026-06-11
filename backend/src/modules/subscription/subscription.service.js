@@ -1,9 +1,8 @@
+const env = require("../../config/env");
 const Stripe = require("stripe");
 const Plan = require("../../models/Plan");
 
-const stripe = Stripe(
-  process.env.STRIPE_SECRET_KEY
-);
+const stripe = Stripe(env.STRIPE_SECRET_KEY);
 
 exports.getStripePlans = async () => {
   const products = await stripe.products.list({ 
@@ -51,8 +50,8 @@ exports.createCheckoutSession = async (planId, userId) => {
         quantity: 1,
       },
     ],
-    success_url: `${process.env.FRONTEND_URL}/subscription/success`,
-    cancel_url: `${process.env.FRONTEND_URL}/subscription`,
+    success_url: `${env.FRONTEND_URL}/subscription/success`,
+    cancel_url: `${env.FRONTEND_URL}/subscription`,
     metadata: {
       userId,
       planId: planId, // Keep original ID for tracking
