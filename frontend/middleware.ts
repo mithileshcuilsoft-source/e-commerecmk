@@ -131,5 +131,6 @@ export const config = {
     "/profile/:path*",
     "/admin/:path*",
     "/vendors/:path*",
+    "/subscription/:path*",
   ],
 };
