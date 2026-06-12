@@ -39,37 +39,45 @@ const ProductList = () => {
   }, []);
 
   return (
-    <section className="py-12 bg-gray-50 dark:bg-gray-950 mt-10">
-      <div className="max-w-screen-2xl mx-auto px-4">
-
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-              Featured Products
+    <section className="py-20 bg-zinc-50 dark:bg-black">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div className="flex flex-col md:flex-row items-baseline justify-between mb-12 gap-4">
+          <div className="space-y-2">
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
+              Featured <span className="text-blue-600">Products</span>
             </h2>
-            <p className="text-gray-500 mt-2">
-              Explore our latest products
+            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">
+              Explore our handpicked selection of top-rated items.
             </p>
           </div>
 
           <a
             href="/products/all-products"
-            className="text-blue-600 font-semibold hover:underline hidden sm:block"
+            className="group flex items-center gap-2 px-6 py-3 bg-white dark:bg-gray-900 text-gray-900 dark:text-white font-bold rounded-xl border border-gray-200 dark:border-gray-800 hover:border-blue-500 dark:hover:border-blue-500 transition-all"
           >
-            View all →
+            Explore all products
+            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
           </a>
         </div>
+
         {loading && (
-          <p className="text-center text-gray-400">
-            Loading products...
-          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[1,2,4,4].map((i) => (
+              <div key={i} className="aspect-square bg-gray-200 dark:bg-gray-800 animate-pulse rounded-3xl" />
+            ))}
+          </div>
         )}
+
         {!loading && products.length === 0 && (
-          <p className="text-center text-gray-400">
-            No products found
-          </p>
+          <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
+            <p className="text-gray-500 dark:text-gray-400 text-xl font-semibold">
+              No products available at the moment.
+            </p>
+          </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {products.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}
