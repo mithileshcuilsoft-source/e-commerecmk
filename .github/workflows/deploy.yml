@@ -1,4 +1,4 @@
-name: Docker CI/CD Pipeline
+name: Production — Build & Deploy
 
 on:
   push:
@@ -9,15 +9,19 @@ on:
       - 'frontend/**'
       - '.github/workflows/deploy.yml'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
+  # ── 1. Detect Changes ──────────────────────────────────────────────────────
   changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -27,99 +31,222 @@ jobs:
             frontend:
               - 'frontend/**'
 
-  backend-deploy:
+  # ── 2. Backend Pipeline ────────────────────────────────────────────────────
+  backend-test:
+    name: Backend Lint & Test
     needs: changes
     if: needs.changes.outputs.backend == 'true' || contains(github.event.head_commit.message, '[all]')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PAT }}
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+      - name: Run lint
+        run: npm run lint
+        working-directory: backend
+      - name: Run tests
+        run: npm run test -- --passWithNoTests
+        working-directory: backend
 
-      - name: Build and Push Backend
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend-app:latest ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
-
-      - name: Deploy Backend to EC2
-        uses: appleboy/ssh-action@master
+  backend-build-push:
+    name: Backend Build & Push
+    needs: [changes, backend-test]
+    if: needs.changes.outputs.backend == 'true' || contains(github.event.head_commit.message, '[all]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.sha.outputs.short }}
+      lowercase_repository: ${{ steps.downcase.outputs.repo }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Downcase repository name
+        id: downcase
+        run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ steps.downcase.outputs.repo }}-backend:latest
+            ghcr.io/${{ steps.downcase.outputs.repo }}-backend:${{ steps.sha.outputs.short }}
+          cache-from: type=gha,scope=backend-prod
+          cache-to: type=gha,mode=max,scope=backend-prod
+
+  backend-deploy:
+    name: Backend Deploy
+    needs: [backend-build-push]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            # Clean up FIRST to make room for the new image
-            docker system prune -af --volumes
-            
-            docker pull ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
-            docker stop backend-app || true
-            docker rm backend-app || true
-            docker run -d \
-              --name backend-app \
-              -p 5000:5000 \
-              --restart always \
-              -e MONGO_URI="${{ secrets.MONGO_URI }}" \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
-              -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
-              -e FRONTEND_URL="${{ secrets.FRONTEND_URL }}" \
-              -e AWS_REGION="${{ secrets.AWS_REGION }}" \
-              -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
-              -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
-              -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKET_NAME }}" \
-              --env-file /data/projects/projects/environment/.env \
-              ${{ secrets.DOCKER_USERNAME }}/backend-app:latest
-            
-            
-            # Brief wait and verify
-            sleep 5
-            docker ps | grep backend-app
+            set -e
+            export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin
+            mkdir -p ~/app/backend
 
-  frontend-deploy:
+            cat > ~/app/backend/docker-compose.yml <<'COMPOSE'
+            services:
+              mongo:
+                image: mongo:7
+                restart: unless-stopped
+                volumes:
+                  - mongo_data:/data/db
+                networks:
+                  - internal
+              backend:
+                image: ghcr.io/${{ needs.backend-build-push.outputs.lowercase_repository }}-backend:${{ needs.backend-build-push.outputs.image_tag }}
+                restart: unless-stopped
+                depends_on:
+                  - mongo
+                env_file: .env
+                ports:
+                  - "3001:3001"
+                networks:
+                  - internal
+                  - web
+            volumes:
+              mongo_data:
+            networks:
+              internal:
+              web:
+            COMPOSE
+
+            cat > ~/app/backend/.env <<'ENV'
+            NODE_ENV=production
+            PORT=3001
+            MONGO_URI=${{ secrets.MONGO_URI }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }}
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
+            AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+            ENV
+
+            sudo docker logout ghcr.io || true
+            echo "${{ secrets.GHCR_PAT }}" | \
+              sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            cd ~/app/backend
+            sudo docker compose pull
+            sudo docker compose up -d --remove-orphans
+            sudo docker image prune -f
+
+  # ── 3. Frontend Pipeline ───────────────────────────────────────────────────
+  frontend-lint:
+    name: Frontend Lint
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || contains(github.event.head_commit.message, '[all]')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PAT }}
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+      - name: Run lint
+        run: npm run lint
+        working-directory: frontend
 
-      - name: Build and Push Frontend
-        run: |
-          docker build \
-            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
-            --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }} \
-            --build-arg NEXT_PUBLIC_FRONTEND_URL=${{ secrets.NEXT_PUBLIC_FRONTEND_URL }} \
-            -t ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest ./frontend
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
-
-      - name: Deploy Frontend to EC2
-        uses: appleboy/ssh-action@master
+  frontend-build-push:
+    name: Frontend Build & Push
+    needs: [changes, frontend-lint]
+    if: needs.changes.outputs.frontend == 'true' || contains(github.event.head_commit.message, '[all]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.sha.outputs.short }}
+      lowercase_repository: ${{ steps.downcase.outputs.repo }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Downcase repository name
+        id: downcase
+        run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.API_URL }}
+          tags: |
+            ghcr.io/${{ steps.downcase.outputs.repo }}-frontend:latest
+            ghcr.io/${{ steps.downcase.outputs.repo }}-frontend:${{ steps.sha.outputs.short }}
+          cache-from: type=gha,scope=frontend-prod
+          cache-to: type=gha,mode=max,scope=frontend-prod
+
+  frontend-deploy:
+    name: Frontend Deploy
+    needs: [frontend-build-push]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "${{ secrets.DOCKER_PAT }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            # Clean up FIRST to make room for the new image
-            docker system prune -af --volumes
+            set -e
+            export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin
+            mkdir -p ~/app/frontend
 
-            docker pull ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
-            docker stop frontend-app || true
-            docker rm frontend-app || true
-            docker run -d \
-              --name frontend-app \
-              -p 3000:3000 \
-              --restart always \
-              ${{ secrets.DOCKER_USERNAME }}/frontend-app:latest
+            cat > ~/app/frontend/docker-compose.yml <<'COMPOSE'
+            services:
+              frontend:
+                image: ghcr.io/${{ needs.frontend-build-push.outputs.lowercase_repository }}-frontend:${{ needs.frontend-build-push.outputs.image_tag }}
+                restart: unless-stopped
+                environment:
+                  NODE_ENV: production
+                  PORT: 3000
+                  NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+                ports:
+                  - "3000:3000"
+            COMPOSE
+
+            sudo docker logout ghcr.io || true
+            echo "${{ secrets.GHCR_PAT }}" | \
+              sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            cd ~/app/frontend
+            sudo docker compose pull
+            sudo docker compose up -d --remove-orphans
+            sudo docker image prune -f
+

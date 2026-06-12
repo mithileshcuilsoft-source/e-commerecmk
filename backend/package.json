@@ -4,6 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo Test Passed",
+    "lint": "echo 'No linting specified'",
     "start": "nodemon -r dotenv/config index.js",
     "seed:admin": "node src/admin.js"
   },
