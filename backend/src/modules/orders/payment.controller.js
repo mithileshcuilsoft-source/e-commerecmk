@@ -19,12 +19,12 @@ exports.createCheckoutSession = async (req, res, next) => {
     const stripe = getStripe();
     const { orderId } = req.body;
 
-    const order = await Order.findById(orderId).populate("items.productId");
+    const order = await Order.findById(orderId).populate("items.productId").populate("userId");
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    if (order.userId.toString() !== req.user.id) {
+    if (order.userId._id.toString() !== req.user.id) {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
 const lineItems = order.items.map((item) => ({
@@ -37,6 +37,7 @@ const lineItems = order.items.map((item) => ({
         : [],
     },
     unit_amount: Math.round(item.price * 100),
+    recurring: { interval: 'month' },
   },
   quantity: item.quantity,
 }));
@@ -50,6 +51,7 @@ if (order.shippingCost > 0) {
         name: "Shipping Fee",
       },
       unit_amount: Math.round(order.shippingCost * 100),
+      recurring: { interval: 'month' },
     },
     quantity: 1,
   });
@@ -64,6 +66,7 @@ if (order.tax > 0) {
         name: "Tax",
       },
       unit_amount: Math.round(order.tax * 100),
+      recurring: { interval: 'month' },
     },
     quantity: 1,
   });
@@ -89,7 +92,8 @@ if (order.tax > 0) {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
-      mode: "payment",
+      mode: "subscription",
+      customer_email: order.userId.email,
       success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&orderId=${order._id}`,
       cancel_url: `${process.env.FRONTEND_URL}/payment/cancel?orderId=${order._id}`,
       metadata: {
@@ -99,6 +103,7 @@ if (order.tax > 0) {
     });
 
     res.json({ success: true, url: session.url, sessionId: session.id });
+
   } catch (error) {
     console.error("STRIPE SESSION ERROR:", error);
     next(error);
@@ -153,6 +158,7 @@ exports.stripeWebhook = async (req, res) => {
       if (session.mode === "subscription") {
         const userId = session.metadata.userId;
         const planId = session.metadata.planId;
+        const orderId = session.metadata.orderId;
         const stripeSubscriptionId = session.subscription;
         const stripeCustomerId = session.customer;
 
@@ -173,22 +179,38 @@ exports.stripeWebhook = async (req, res) => {
           currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         };
 
-        // If planId is a MongoDB ID, link it
-        if (planId.match(/^[0-9a-fA-F]{24}$/)) {
+        // If planId is a valid MongoDB ID, link it
+        if (planId && planId.match(/^[0-9a-fA-F]{24}$/)) {
           updateData.plan = planId;
         }
 
         try {
+          // Update Subscription
           await Subscription.findOneAndUpdate(
             { user: userId },
             updateData,
             { upsert: true, new: true }
           );
           console.log(`Subscription for user ${userId} activated.`);
+
+          // If this subscription is tied to an order, mark the order as paid
+          if (orderId) {
+            await Order.findByIdAndUpdate(orderId, {
+              paymentStatus: "paid",
+              paymentDetails: {
+                sessionId: session.id,
+                paymentIntentId: session.payment_intent, // Note: For subscriptions, this might be null in the initial session, but usually handled by invoice.paid
+                amountTotal: session.amount_total / 100,
+                currency: session.currency,
+              },
+            });
+            console.log(`Order ${orderId} marked as paid via subscription.`);
+          }
         } catch (error) {
-          console.error(" Error updating subscription on webhook:", error);
+          console.error(" Error updating subscription/order on webhook:", error);
         }
       }
+
       break;
     }
 
